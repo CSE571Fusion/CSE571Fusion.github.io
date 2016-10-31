@@ -1,1 +1,44 @@
-Hello, world
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Fusion Project</title>
+
+        <script type="text/javascript">
+            window.onload = function () {
+                var members = ["Tyler Yeats", "Parker Owan", "Zoey Chen"];
+                shuffle(members);
+
+
+                document.getElementById("team-member-0").innerHTML = members[0];
+                document.getElementById("team-member-1").innerHTML = members[1];
+                document.getElementById("team-member-2").innerHTML = members[2];
+            };
+
+            function shuffle(a) {
+                for (let i = a.length; i; i--) {
+                    let j = Math.floor(Math.random() * i);
+                    [a[i - 1], a[j]] = [a[j], a[i - 1]];
+                }
+            }
+        </script>
+
+    </head>
+    
+    <body>
+        <h4>Team Members</h4>
+        <div id="team-member-0">a</div>
+        <div id="team-member-1">b</div>
+        <div id="team-member-2">c</div>
+
+        <h4>Project description</h4>
+        <p>Use 2D SLAM in the context of a small room or area. If we really get far, implement it on a mobile robot.</p>
+
+        <h4>Timeline</h4>
+        <ol>
+            <li>Benchmark a hallway or other area using sample data (possibly from the <a href="http://cres.usc.edu/radishrepository/view-all.php">Robotics Data Set Repository</a>)</li>
+            <li>Computer SDF and implement marching squares</li>
+            <li>Implement SLAM to get robot position estimation</li>
+        </ol>
+    </body>
+</html>
