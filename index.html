@@ -26,19 +26,37 @@
     </head>
     
     <body>
+        <h1>LaserFusion - UW CSE571 Project</h1>
+        <p>Implement KinectFusion SLAM algorithm (<a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/ismar2011.pdf">KinectFusion ismar2011</a>) for a 2D laser scan dataset.</p>
+        
         <h4>Team Members</h4>
         <div id="team-member-0">a</div>
         <div id="team-member-1">b</div>
         <div id="team-member-2">c</div>
 
-        <h4>Project description</h4>
-        <p>Use 2D SLAM in the context of a small room or area. If we really get far, implement it on a mobile robot.</p>
-
-        <h4>Timeline</h4>
+        <h4>Timeline (dates are proposed deadlines)</h4>
         <ol>
-            <li>Benchmark a hallway or other area using sample data (possibly from the <a href="http://cres.usc.edu/radishrepository/view-all.php">Robotics Data Set Repository</a>)</li>
-            <li>Computer SDF and implement marching squares</li>
-            <li>Implement SLAM to get robot position estimation</li>
+            <li>Nov 6: Parse the benchmark Intel-01 Oregon dataset (<a href="http://cres.usc.edu/radishrepository/view-one.php?name=intel_oregon">Robotics Data Set Repository</a>) </li>
+            <li>Nov 13: Set up the main function, implement the measurement() and TSDF updateReconstruction() functions (see KinectFusion paper)</li>
+            <li>Nov 20: Implement estimatePose() from robot odometry model</li>
+            <li>Nov 27: Implement predictSurface() - TSDF raycasting for surface prediction</li>
+            <li>Dec 11: Finalize LaserFusion evaluation and write-up
         </ol>
+        
+        
+        <h2>Progress and Updates</h2>
+        <h4>Oct 31, 2016</h4>
+            <li> T.Y. Created the gitlab.io page and timeline</li>
+        <h4>Nov 4, 2016</h4>
+            <li> Q.C. Chose Intel-01 dataset from Radish Repo</li>
+        <h4>Nov 7, 2016</h4>
+            <li>P.O. Parsed the Intel-01 Laser Scan and pioneer odometry dataset (see video of raw data)</li>
+            <li>P.O. Commited a MATLAB main routine, plotting function and the measurement() function for computing bilaterally-filtered scan data vertices and normals</li>
+            <video width="640" height="360" controls>
+                <source src="intel-01-sorted_raw.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+            </video>
+        
+        
     </body>
 </html>
