@@ -1,14 +1,14 @@
 %% mainLaserFusion.m
-% 
+%
 % Description:
 %   run the main laser fusion with TSDF on the intel laser scan dataset
-% 
+%
 % Inputs:
 %   none
-% 
+%
 % Example:
 %   mainLaserFusion
-% 
+%
 % Dependencies:
 %   preprocessDataset()
 %   measurement()
@@ -16,7 +16,7 @@
 %   updateReconstruction()
 %   predictSurface()
 %   updatePlot()
-% 
+%
 % *************************************************************************
 % Modified: 07-Nov-2016
 % Created: 07-Nov-2016
@@ -25,16 +25,16 @@
 % University of Washington
 % CSE 571: Probabilistic robotics
 % *************************************************************************
-
+clear Sk;
 disp('Running mainLaserFusion.m...')
 disp('******************************************')
-set(0,'DefaultTextInterpreter','Latex',...
-      'DefaultLegendInterpreter','Latex',...
-      'DefaultTextFontSize',18,...
-      'DefaultAxesFontSize',18,...
-      'DefaultLineLineWidth',1,...
-      'DefaultLineMarkerSize',7.75);
-  
+% set(0,'DefaultTextInterpreter','Latex',...
+%       'defaultLegendInterpreter','Latex',...
+%       'DefaultTextFontSize',18,...
+%       'DefaultAxesFontSize',18,...
+%       'DefaultLineLineWidth',1,...
+%       'DefaultLineMarkerSize',7.75);
+
 % *************************************************************************
 % Simulation options
 
@@ -44,7 +44,8 @@ plotOptn = true;
 % Bilateral filter parameters
 sigmaS = 1.0;
 sigmaR = 1.0;
-
+% truncated distance
+mu=1.5;
 
 %% Open the plot
 if plotOptn
@@ -58,7 +59,7 @@ end
 [T,R] = preprocessDataset();
 
 % initialize a blank map
-Sk = [];
+% Sk = [];
 
 % initialize previous states
 Vkprev = [];
@@ -69,16 +70,17 @@ for k = 1:length(T)
     
     % measurement
     [Vk,Nk,Tk,Rk] = measurement(T,R,k,sigmaS,sigmaR);
-    
+     % initialize Sk: [x,y,Fk,Wk]'
+    if k==1
+        FWk=zeros(2,length(Rk));Sk=[Rk(1,:);Rk(2,:);FWk(1,:);FWk(2,:)];
+    end
     % TODO: we need to perform the pose estimation, reconstruction and
     % prediction steps still.  These functions have not yet been created.
+    % update reconstruction
+    Sk = updateReconstruction(Tk,Rk,Sk,mu);
     %{
     % pose estimation
     Tk = estimatePose(Vk,Nk,Vkprev,Nkprev,Tkprev);
-    
-    % update reconstruction
-    Sk = updateReconstruction(Tk,Rk,Sk);
-    
     % predict surface
     [Vkhat,Nkhat,Tk] = predictSurface(Sk,Tkprev);
     
@@ -94,11 +96,11 @@ for k = 1:length(T)
     end
     
     % don't let it run for the entire dataset - we'll change this later
-    if k > 500
+    if k > 400
         break
     end
     
-
+    
 end
 
 
