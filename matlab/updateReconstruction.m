@@ -31,28 +31,42 @@
 % Qiuyu Chen, Electrical Engineering
 % University of Washington
 % *************************************************************************
-function Sk = updateReconstruction(Tk,Rk,Sk,mu)
+function Sk = updateReconstruction(Tk,Rk,Sk,mu,dx)
 
 % extract point in the global frame and translation vector
 t=[Tk(1,3),Tk(2,3)];
-p=Rk;
+
+% map point cloud to global
+p = Tk*[Rk; ones(1,length(Rk))];
+
+% take inverse once
+Tkinv = inv(Tk);
 WRk=1;
+
+% figure(1),clf;scatter(p(1,:),p(2,:))
+% hold on;
+% scatter(Sk(1,:)-0.5,Sk(2,:)-0.5,'+')
+
+
 % compute point in the sensor frame, which is Rk under laser scan
-x=Rk;
-% get the distance from the point p to the laser
-D=sqrt(p(1,:).^2+p(2,:).^2);
-% define the distance to the surface
 for i=1:1:length(p)
+    
+    p(1:2,i) = round(p(1:2,i)/dx)*dx;
+    x = Tkinv*p(:,i);
+    
     % normalization of the ray distance to point p
-    lembda(i)=sqrt(x(1,i)^2+x(2,i)^2+1);
-    N(i)=sqrt((t(1,1)-p(1,i))^2+(t(2)-p(2,i))^2);
-    eta(i)=lembda(i)^-1.*N(i)-D(i);
+    lembda(i)=norm(x(1:2),2);
+    N(i)=norm(t'-p(1:2,i),2);
+    D(i)=norm(Rk(:,i),2);
+    eta(i)=N(i)./lembda(i)-D(i);
+
     % define truncated signed distance function
     FRk(i)=TSDF(eta(i),mu);
     
     if (FRk(i)~=1e10)
         % find the TSDF in previous frame
-        c=find(Sk(1,:)==p(1,i) & Sk(2,:)==p(2,i));
+        e = bsxfun(@minus,Sk(1:2,:),p(1:2,i));
+        c = find(sum(abs(e),1) < dx/3);
         if isempty(c)==1
             Fk=0;
             Wk=0;
@@ -65,7 +79,7 @@ for i=1:1:length(p)
         % SDF F minimising
         Fk=(Wk*Fk+WRk*FRk(i))/(Wk+WRk);
         Wk=1+Wk;
-        Sk(:,i)=[p(1,i);p(2,i);Fk;Wk];
+        Sk(3:4,c) = [Fk;Wk];
     end
 end
 end

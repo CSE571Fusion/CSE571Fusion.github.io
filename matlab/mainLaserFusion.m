@@ -25,7 +25,7 @@
 % University of Washington
 % CSE 571: Probabilistic robotics
 % *************************************************************************
-clear Sk;
+clear all; clc
 disp('Running mainLaserFusion.m...')
 disp('******************************************')
 % set(0,'DefaultTextInterpreter','Latex',...
@@ -40,6 +40,7 @@ disp('******************************************')
 
 % set plotOptn flag to true or false
 plotOptn = true;
+makeVideo = true;
 
 % Bilateral filter parameters
 sigmaS = 1.0;
@@ -50,6 +51,20 @@ mu=1.5;
 %% Open the plot
 if plotOptn
     h = figure(1);cla
+    colormap(h,flipud(gray))
+    
+    if makeVideo
+        name = 'intel-01-sorted_medRare';
+        vObj = VideoWriter(name,'MPEG-4');
+        vObj.FrameRate = 30;
+        vObj.Quality = 95;
+        open(vObj);
+        
+        set(h,'position',[1 5 1280 720])
+        name = strrep(name,'_','\_');
+        title(name)
+    end
+    
 end
 
 
@@ -58,8 +73,10 @@ end
 % preprocess the dataset
 [T,R] = preprocessDataset();
 
-% initialize a blank map
-% Sk = [];
+% initialize the map
+dx = 0.1;
+% Sk = initializeMap([-25 5],[-15 20],0.5);
+Sk = initializeMap([-15 5],[-10 10],dx);
 
 % initialize previous states
 Vkprev = [];
@@ -70,14 +87,11 @@ for k = 1:length(T)
     
     % measurement
     [Vk,Nk,Tk,Rk] = measurement(T,R,k,sigmaS,sigmaR);
-     % initialize Sk: [x,y,Fk,Wk]'
-    if k==1
-        FWk=zeros(2,length(Rk));Sk=[Rk(1,:);Rk(2,:);FWk(1,:);FWk(2,:)];
-    end
+
     % TODO: we need to perform the pose estimation, reconstruction and
     % prediction steps still.  These functions have not yet been created.
     % update reconstruction
-    Sk = updateReconstruction(Tk,Rk,Sk,mu);
+    Sk = updateReconstruction(Tk,Rk,Sk,mu,dx);
     %{
     % pose estimation
     Tk = estimatePose(Vk,Nk,Vkprev,Nkprev,Tkprev);
@@ -93,6 +107,10 @@ for k = 1:length(T)
     % update the plot
     if plotOptn
         h = updatePlot(h,Tk,Rk,Vk,Nk,Sk);
+        if makeVideo
+            fra = getframe(h);
+            writeVideo(vObj,fra);
+        end
     end
     
     % don't let it run for the entire dataset - we'll change this later
@@ -101,6 +119,13 @@ for k = 1:length(T)
     end
     
     
+end
+
+% close videowriter
+if plotOptn
+    if makeVideo
+        close(vObj);
+    end
 end
 
 
