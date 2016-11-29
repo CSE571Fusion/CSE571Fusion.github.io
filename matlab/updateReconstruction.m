@@ -1,4 +1,4 @@
-%%     Sk = updateReconstruction(Tk,Rk,Sk);
+%% Sk = updateReconstruction(Tk,Rk,Sk,mu,dx,plotOptn,h);
 %
 % Description:
 %   Compute Truncated signed distance function from laser scan
@@ -28,63 +28,100 @@
 % Modified: 08-Nov-2016
 % Created: 08-Nov-2016
 %
-% Qiuyu Chen, Electrical Engineering
+% Parker Owan, Ph.D. Student
 % University of Washington
 % *************************************************************************
-function Sk = updateReconstruction(Tk,Rk,Sk,mu,dx)
-
-% extract point in the global frame and translation vector
-t=[Tk(1,3),Tk(2,3)];
-
-% map point cloud to global
-p = Tk*[Rk; ones(1,length(Rk))];
-
-% take inverse once
-Tkinv = inv(Tk);
-WRk=1;
-
-% figure(1),clf;scatter(p(1,:),p(2,:))
-% hold on;
-% scatter(Sk(1,:)-0.5,Sk(2,:)-0.5,'+')
+function Sk = updateReconstruction(Tk,Rk,Sk,mu,Odom,optn)
 
 
-% compute point in the sensor frame, which is Rk under laser scan
-for i=1:1:length(p)
+% get resolution
+dx = Sk.resolution;
+
+% get robot position info
+tr = Tk(1:2,3);
+
+% map the laser scan points into the world frame
+point = bsxfun(@plus,Tk(1:2,1:2)*Rk,Tk(1:2,3));
+
+
+if ( optn.plot )
+    sf = 0.5;
+    sh=[];
+    mh=[];
+    figure(optn.h),cla
+    plot(Odom(:,1),Odom(:,2),'.-r')
+    mh = mesh(Sk.x-dx/2,Sk.y-dx/2,Sk.TSDF,'FaceColor','flat',...
+        'EdgeColor','none','FaceAlpha',1);
+    plot(Tk(1,3),Tk(2,3),'ob','MarkerSize',10)
+    quiver(Tk(1,3),Tk(2,3),sf*Tk(1,1),sf*Tk(2,1),'b')
+    xlim([min(min(Sk.x)) max(max(Sk.x))])
+    ylim([min(min(Sk.y)) max(max(Sk.y))])
+    view(2)
+    text(-19,-9,sprintf('k = %02i',optn.k))
+    patch([-15 -10 -10 -15 -15],[-9.1 -9.1 -8.9 -8.9 -9.1],'k');
+    text(-12.5,-8.9,'5 m','HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+end
+
+plotCounter = 1;
+
+for k = 1:length(point)
     
-    p(1:2,i) = round(p(1:2,i)/dx)*dx;
-    x = Tkinv*p(:,i);
-    
-    % normalization of the ray distance to point p
-    lembda(i)=norm(x(1:2),2);
-    N(i)=norm(t'-p(1:2,i),2);
-    D(i)=norm(Rk(:,i),2);
-    eta(i)=N(i)./lembda(i)-D(i);
-
-    % define truncated signed distance function
-    FRk(i)=TSDF(eta(i),mu);
-    
-    if (FRk(i)~=1e10)
-        % find the TSDF in previous frame
-        e = bsxfun(@minus,Sk(1:2,:),p(1:2,i));
-        c = find(sum(abs(e),1) < dx/3);
-        if isempty(c)==1
-            Fk=0;
-            Wk=0;
-        else
-        Fk=Sk(3,c);
-        Wk=Sk(4,c);
-        end
-        % define TSDF based on point-wise{p|FR(p)~=null}
-        % L2 norm the fused surface results as the zero-crossings of the point-wise
-        % SDF F minimising
-        Fk=(Wk*Fk+WRk*FRk(i))/(Wk+WRk);
-        Wk=1+Wk;
-        Sk(3:4,c) = [Fk;Wk];
+    % Raycast algorithm - using equation for a line ***********************
+    m = (point(2,k)-tr(2))./(point(1,k)-tr(1));     % slope = dy/dx
+    if abs(m) > 1
+        m = (point(1,k)-tr(1))./(point(2,k)-tr(2));	% slope = dx/dy
+        b = point(1,k) - m*point(2,k);
+        yv = round(point(2,k)/dx)*dx+(-5:5)*dx;
+        xv = round((m*yv+b)/dx)*dx;
+    else
+        b = point(2,k) - m*point(1,k);
+        xv = round(point(1,k)/dx)*dx+(-5:5)*dx;
+        yv = round((m*xv+b)/dx)*dx;
     end
+    % *********************************************************************
+    
+    % Compute the TSDF
+    for i = 1:length(xv)
+        % compute the TSDF
+        D = norm(point(:,k)-tr,2);
+        N(i) = norm([xv(i);yv(i)]-tr,2);
+        eta(i) = N(i)-D;
+        val(i) = TSDF(eta(i),mu);
+        
+        % fuse TSDF into Sk
+        WRk = exp(-0.5*5*D);
+        [ix,iy] = find(abs(Sk.x-xv(i))<dx/3 & abs(Sk.y-yv(i))<dx/3);
+        if ~isnan(Sk.TSDF(ix,iy))
+            nn = Sk.Weights(ix,iy)+WRk;
+            Sk.TSDF(ix,iy) = (Sk.TSDF(ix,iy)*Sk.Weights(ix,iy)+...
+                WRk*val(i))./nn;
+            Sk.Weights(ix,iy) = nn;
+        else
+            Sk.TSDF(ix,iy) = val(i);
+            Sk.Weights(ix,iy) = WRk;
+        end
+    end
+    
+    nSkips = 30;
+    if optn.plot && ((plotCounter-1)/nSkips==round((plotCounter-1)/nSkips))
+        % Draw raycast
+        plot([tr(1) point(1,k)],[tr(2) point(2,k)],...
+            '-','Color',[.5 .5 .5],'MarkerSize',10);
+        delete(sh);
+        sh=scatter(point(1,1:k),point(2,1:k),8,'k','filled');
+        delete(mh);
+        mh=mesh(Sk.x-dx/2,Sk.y-dx/2,Sk.TSDF,...
+            'FaceColor','flat',...
+            'EdgeColor','none','FaceAlpha',1);
+        drawnow
+        if isfield(optn,'vObj')
+            fra = getframe(optn.h);
+            writeVideo(optn.vObj,fra);
+        end
+    end
+    plotCounter = plotCounter+1;
 end
-end
-
-
 
 
 

@@ -19,13 +19,12 @@ if nargin<2
 end
 
 % define TSDF
-% if eta>=-mu
-%     Fk=min(1,eta/mu)* sign(eta);
-    Fk=min(1,abs(eta/mu))*sign(eta);
-% else
+if eta>=-mu
+    Fk=min(1,eta/mu)* sign(eta);
+else
     % define a really large number
-%     Fk=1e10;
-% end
+    Fk=1e10;
+end
 
 
 

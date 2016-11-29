@@ -1,4 +1,4 @@
-%% [T,R] = preprocessDataset(identifier,plotOptn)
+%% [T,R] = preprocessDataset()
 % 
 % Description:
 %   preprocessor for the dataset.  Imports the 'intel-01-sorted.mat'
@@ -10,8 +10,7 @@
 % 
 % Inputs:
 %   identifier = 1;     % intel-01-sorted.mat
-%                2;     % csail.corrected.mat
-%   plotOptn   = 0,1;   % true/false
+%                2;     % 
 % 
 % Example:
 %   [T,R] = preprocessDataset(identifier)
@@ -27,7 +26,7 @@
 % Parker Owan, Ph.D. Student
 % University of Washington
 % *************************************************************************
-function [T,R] = preprocessDataset(identifier,plotOptn)
+function [T,R] = preprocessDataset(identifier)
 
 
 switch identifier
@@ -54,22 +53,20 @@ switch identifier
         Rp = R(:,1:3:end);
         Rp(Rp > 81) = nan;
         
-        if plotOptn        
-            figure(100),clf
-            subplot(211)
-            hold on; grid on;
-            imagesc(Rp')
-            colormap(gca,hot)
-            axis tight
-            ylabel('Range Index')
-            
-            subplot(212)
-            hold on; grid on;
-            plot(T)
-            axis tight
-            xlabel('$k$')
-            ylabel('Robot Odometry')
-        end
+        figure(100),clf
+        subplot(211)
+        hold on; grid on;
+        imagesc(Rp')
+        colormap(gca,hot)
+        axis tight
+        ylabel('Range Index')
+        
+        subplot(212)
+        hold on; grid on;
+        plot(T)
+        axis tight
+        xlabel('$k$')
+        ylabel('Robot Odometry')
 end
 
 

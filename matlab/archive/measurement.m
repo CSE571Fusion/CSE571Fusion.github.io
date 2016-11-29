@@ -1,4 +1,4 @@
-%% [Vk,Nk,Tk,Rk] = measurement(T,R,k,sigmaS,sigmaR)
+%% [Vk,Nk,Tk,Rk] = measurement(T,R,k,sigmaS,sigmaR,plotOptn,h)
 % 
 % Description:
 %   Compute vertices Vk, normals Nk, robot pose tranformation Tk, and point
@@ -23,7 +23,7 @@
 % Parker Owan, Ph.D. Student
 % University of Washington
 % *************************************************************************
-function [Vk,Nk,Tk,Rk] = measurement(T,R,k,sigmaS,sigmaR)
+function [Vk,Nk,Tk,Rk] = measurement(T,R,k,sigmaS,sigmaR,plotOptn,h)
 
 
 % filter function

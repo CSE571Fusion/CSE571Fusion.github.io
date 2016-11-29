@@ -31,10 +31,9 @@ yv = y(1):dx:y(2);
 
 [xm,ym] = meshgrid(xv,yv);
 
-Sk.resolution = dx;
-Sk.x = xm;
-Sk.y = ym;
-Sk.TSDF = nan(size(xm));
-Sk.Weights = zeros(size(xm));
+Sk.grid = [xm(:)';
+           ym(:)';
+           zeros(size(xm(:)'));      % SDF
+           ones(size(xm(:)'))];      % weight
 
 return
