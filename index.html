@@ -45,30 +45,36 @@
         
         
         <h2>Progress and Updates</h2>
-        <h4>Oct 31, 2016</h4>
-            <li> T.Y. Created the gitlab.io page and timeline</li>
-        <h4>Nov 4, 2016</h4>
-            <li> Q.C. Chose Intel-01 dataset from Radish Repo</li>
-        <h4>Nov 7, 2016</h4>
-            <li>P.O. Parsed the Intel-01 Laser Scan and pioneer odometry dataset (see video of raw data)</li>
-            <li>P.O. Commited a MATLAB main routine, plotting function and the measurement() function for computing bilaterally-filtered scan data vertices and normals</li>
-            <video width="640" height="360" controls>
-                <source src="intel-01-sorted_raw.mp4" type="video/mp4">
+        <h4>Dec 2, 2016</h4>
+        <li>P.O. Added pose estimation based on ICP with a random error generated in the ground truth at each measurement.  The video shows the ICP iterations and map reconstruction for 47 sampled scans.  Green represents a positive SDF value and red represents a negative SDF value.  The zero crossing is gray.  Yellow lines are distances use to compute the cost function for the pose optimization step of ICP. Note that a scan matching failure occurs at k = 43, and subsequently onward.</li>
+        <video width="640" height="360" controls>
+            <source src="LaserFusion 01-Dec-2016 23.01.28.mp4" type="video/mp4">
                 Your browser does not support the video tag.
-            </video>
-        <h4>Nov 8, 2016</h4>
-            <li> Q.C. Compute TSDF for each given point</li>
-        <h4>Nov 22, 2016</h4>
-            <li> P.O., Q.C., T.Y. Debugged and finished implementation of TSDF for the run (updateReconstruction)</li>
-            <video width="640" height="360" controls>
-                <source src="intel-01-sorted_medRare.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
+                </video>
         <h4>Nov 23, 2016</h4>
             <li>P.O. Updated the TSDF-based reconstruction in updateReconstruction() to incorporate raycasting for a dataset with absolute ground truth at (<a href="http://www.ipb.uni-bonn.de/datasets/">MIT CSAIL</a>).  The video below shows the TSDF update for 100 sampled scans using absolute ground truth robot pose.  Green represents a positive SDF value and red represents a negative SDF value.  The zero crossing is gray.</li>
             <video width="640" height="360" controls>
                 <source src="csail.corrected Raycasting TSDF.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                     </video>
+        <h4>Nov 22, 2016</h4>
+            <li> P.O., Q.C., T.Y. Debugged and finished implementation of TSDF for the run (updateReconstruction)</li>
+            <video width="640" height="360" controls>
+                <source src="intel-01-sorted_medRare.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                    </video>
+        <h4>Nov 8, 2016</h4>
+            <li> Q.C. Compute TSDF for each given point</li>
+        <h4>Nov 7, 2016</h4>
+            <li>P.O. Parsed the Intel-01 Laser Scan and pioneer odometry dataset (see video of raw data)</li>
+            <li>P.O. Commited a MATLAB main routine, plotting function and the measurement() function for computing bilaterally-filtered scan data vertices and normals</li>
+            <video width="640" height="360" controls>
+                <source src="intel-01-sorted_raw.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                    </video>
+        <h4>Nov 4, 2016</h4>
+            <li> Q.C. Chose Intel-01 dataset from Radish Repo</li>
+        <h4>Oct 31, 2016</h4>
+            <li> T.Y. Created the gitlab.io page and timeline</li>
     </body>
 </html>
