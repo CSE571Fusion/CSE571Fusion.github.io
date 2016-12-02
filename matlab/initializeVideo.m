@@ -1,7 +1,7 @@
 function vObj = initializeVideo(h,Sk)
 
 
-name = 'csail.corrected Raycasting TSDF';
+name = ['LaserFusion ',datestr(datetime)];
 vObj = VideoWriter(name,'MPEG-4');
 vObj.FrameRate = 30;
 vObj.Quality = 95;

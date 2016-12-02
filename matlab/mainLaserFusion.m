@@ -25,6 +25,7 @@
 % University of Washington
 % CSE 571: Probabilistic robotics
 % *************************************************************************
+warning off
 clear all; clc
 disp('Running mainLaserFusion.m...')
 disp('******************************************')
@@ -36,9 +37,9 @@ set(0,'DefaultTextInterpreter','Latex',...
       'DefaultLineMarkerSize',7.75);
 
 % *************************************************************************
-% Simulation options
+%% Simulation options
 optn.plot = true;
-optn.video = false;
+optn.video = true;
 
 % Bilateral filter parameters
 sigmaS = 1.0;
@@ -47,16 +48,33 @@ sigmaR = 1.0;
 % truncated distance
 mu = 0.5;
 
+% scan matching
+nu = 0.3;     % [m] - distance to associate closest point
+
+% perturbation parameters for Tk, set == 0 for no error
+% alpha = [0, 0, 0];
+alpha = [.1, .1, .2];   % [x, y, theta]
+
+% map representation settings
+xRange = [-10 10];      % [-15 45]
+yRange = [-15 5];       % [-15 15]
+dx = 0.05;              % 0.01;
+
+% stop index
+kStop = 50;     % 26;
 
 % *************************************************************************
-% Initialization
+%% Initialization
 
 % preprocess the dataset
 [T,R] = preprocessDataset(2,false);
 
 % initialize the map
-Sk = initializeMap([-15 45],[-15 15],0.05);
+Sk = initializeMap(xRange,yRange,dx);
+
+% initialize the odometry
 Odom = [];
+Cost = [];
 
 % Open the plot
 if ( optn.plot )
@@ -67,7 +85,10 @@ if ( optn.plot )
 end
 
 % *************************************************************************
-% Main loop
+%% Main loop
+% load saved_k=26.mat
+% kStart = k+1;
+% for k = kStart:kStart+20
 for k = 1:length(T)
     
     % push k to options struct
@@ -75,29 +96,29 @@ for k = 1:length(T)
     
     % measurement
     [Vk,Nk,Tk,Rk] = measurement(T,R,k,sigmaS,sigmaR);
+    
+    % scan matching
+    if k > 1
+        Tk = perturbOdometry(Tk,alpha);
+        Tk = matchLaserScan(Tk,Rk,Sk,nu,Odom,optn);
+    end
     Odom = [Odom; Tk(1:2,3)'];
     
-    % compute the TSDF
+    % compute and fuse the TSDF
     Sk = updateReconstruction(Tk,Rk,Sk,mu,Odom,optn);
     
     % don't let it run for the entire dataset - we'll change this later
-    if k == 100
+    if k == kStop
         break;
     end
 end
 
 % *************************************************************************
-% Cleanup
+%% Cleanup
 if optn.plot
-    if plot.video
+    if optn.video
         close(optn.vObj);
     end
 end
 
-
-
-
-
-
-
-
+% *************************************************************************

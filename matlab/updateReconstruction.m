@@ -42,24 +42,27 @@ tr = Tk(1:2,3);
 
 % map the laser scan points into the world frame
 point = bsxfun(@plus,Tk(1:2,1:2)*Rk,Tk(1:2,3));
-
-
+    
 if ( optn.plot )
+    printString = sprintf('k = %02i',optn.k);
     sf = 0.5;
     sh=[];
     mh=[];
     figure(optn.h),cla
     plot(Odom(:,1),Odom(:,2),'.-r')
-    mh = mesh(Sk.x-dx/2,Sk.y-dx/2,Sk.TSDF,'FaceColor','flat',...
-        'EdgeColor','none','FaceAlpha',1);
+    mh = mesh(Sk.x,Sk.y,Sk.TSDF,...
+        'FaceColor','flat','EdgeColor','none','FaceAlpha',1);
     plot(Tk(1,3),Tk(2,3),'ob','MarkerSize',10)
     quiver(Tk(1,3),Tk(2,3),sf*Tk(1,1),sf*Tk(2,1),'b')
     xlim([min(min(Sk.x)) max(max(Sk.x))])
     ylim([min(min(Sk.y)) max(max(Sk.y))])
     view(2)
-    text(-19,-9,sprintf('k = %02i',optn.k))
-    patch([-15 -10 -10 -15 -15],[-9.1 -9.1 -8.9 -8.9 -9.1],'k');
-    text(-12.5,-8.9,'5 m','HorizontalAlignment','center',...
+    text(min(min(Sk.x))+1,min(min(Sk.y))+1,...
+        printString)
+    patch([-6 -1 -1 -6 -6]+max(max(Sk.x)),...
+        [-0.1 -0.1 0.1 0.1 -0.1]+min(min(Sk.y))+1,'k');
+    text(max(max(Sk.x))-3.5,min(min(Sk.y))+1,...
+        '5 m','HorizontalAlignment','center',...
         'VerticalAlignment','bottom')
 end
 
@@ -70,6 +73,7 @@ for k = 1:length(point)
     % Raycast algorithm - using equation for a line ***********************
     m = (point(2,k)-tr(2))./(point(1,k)-tr(1));     % slope = dy/dx
     if abs(m) > 1
+        % redefine the raycast to avoid singularity in dy/dx for dx -> 0
         m = (point(1,k)-tr(1))./(point(2,k)-tr(2));	% slope = dx/dy
         b = point(1,k) - m*point(2,k);
         yv = round(point(2,k)/dx)*dx+(-5:5)*dx;
@@ -104,22 +108,22 @@ for k = 1:length(point)
     end
     
     nSkips = 30;
-    if optn.plot && ((plotCounter-1)/nSkips==round((plotCounter-1)/nSkips))
-        % Draw raycast
-        plot([tr(1) point(1,k)],[tr(2) point(2,k)],...
-            '-','Color',[.5 .5 .5],'MarkerSize',10);
-        delete(sh);
-        sh=scatter(point(1,1:k),point(2,1:k),8,'k','filled');
-        delete(mh);
-        mh=mesh(Sk.x-dx/2,Sk.y-dx/2,Sk.TSDF,...
-            'FaceColor','flat',...
-            'EdgeColor','none','FaceAlpha',1);
-        drawnow
-        if isfield(optn,'vObj')
-            fra = getframe(optn.h);
-            writeVideo(optn.vObj,fra);
-        end
-    end
+%     if optn.plot && ((plotCounter-1)/nSkips==round((plotCounter-1)/nSkips))
+%         % Draw raycast
+%         plot([tr(1) point(1,k)],[tr(2) point(2,k)],...
+%             '-','Color',[.5 .5 .5],'MarkerSize',10);
+%         delete(sh);
+%         sh=scatter(point(1,1:k),point(2,1:k),8,'k','filled');
+%         delete(mh);
+%         mh=mesh(Sk.x+dx/2,Sk.y+dx/2,Sk.TSDF,...
+%             'FaceColor','flat',...
+%             'EdgeColor','none','FaceAlpha',1);
+%         drawnow
+%         if isfield(optn,'vObj')
+%             fra = getframe(optn.h);
+%             writeVideo(optn.vObj,fra);
+%         end
+%     end
     plotCounter = plotCounter+1;
 end
 
