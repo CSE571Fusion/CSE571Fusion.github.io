@@ -39,7 +39,7 @@ set(0,'DefaultTextInterpreter','Latex',...
 % *************************************************************************
 %% Simulation options
 optn.plot = true;
-optn.video = true;
+optn.video = false;
 
 % Bilateral filter parameters
 sigmaS = 1.0;
@@ -86,10 +86,10 @@ end
 
 % *************************************************************************
 %% Main loop
-% load saved_k=26.mat
-% kStart = k+1;
-% for k = kStart:kStart+20
-for k = 1:length(T)
+load saved_k=26.mat
+kStart = k+1;
+for k = kStart:kStart+20
+% for k = 1:length(T)
     
     % push k to options struct
     optn.k = k;
