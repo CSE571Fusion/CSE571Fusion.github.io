@@ -1,3 +1,4 @@
+
 %% mainLaserFusion.m
 %
 % Description:
@@ -25,6 +26,7 @@
 % University of Washington
 % CSE 571: Probabilistic robotics
 % *************************************************************************
+% addpath(genpath('D:\Documents\GitHub\CSE571Fusion.github.io\matlab'));
 warning off
 clear all; clc
 disp('Running mainLaserFusion.m...')
@@ -39,7 +41,7 @@ set(0,'DefaultTextInterpreter','Latex',...
 % *************************************************************************
 %% Simulation options
 optn.plot = true;
-optn.video = false;
+optn.video = true;
 
 % Bilateral filter parameters
 sigmaS = 1.0;
@@ -50,7 +52,7 @@ mu = 0.5;
 
 % scan matching
 nu = 0.3;     % [m] - distance to associate closest point
-
+ 
 % perturbation parameters for Tk, set == 0 for no error
 % alpha = [0, 0, 0];
 alpha = [.1, .1, .2];   % [x, y, theta]
@@ -59,6 +61,10 @@ alpha = [.1, .1, .2];   % [x, y, theta]
 xRange = [-10 10];      % [-15 45]
 yRange = [-15 5];       % [-15 15]
 dx = 0.05;              % 0.01;
+
+%constrain of sum(D-N): error between predicted surface and projected point
+%clouds. Strong constraint + gradient=1e-4
+e=dx/sqrt(2);%0.012;
 
 % stop index
 kStop = 50;     % 26;
@@ -86,10 +92,12 @@ end
 
 % *************************************************************************
 %% Main loop
-load saved_k=26.mat
-kStart = k+1;
-for k = kStart:kStart+20
-% for k = 1:length(T)
+% load saved_k=26.mat
+% kStart = k+1;
+% for k = kStart:kStart+20        
+fileID = fopen('iterations.txt','w');
+formatSpec = 'When k is %4.2f, it needs %d iterations. dJ: %8.3f, J: %8.3f\n';
+for k = 1:length(T)
     
     % push k to options struct
     optn.k = k;
@@ -100,19 +108,21 @@ for k = kStart:kStart+20
     % scan matching
     if k > 1
         Tk = perturbOdometry(Tk,alpha);
-        Tk = matchLaserScan(Tk,Rk,Sk,nu,Odom,optn);
+        [Tk,iter,dJ,J] = matchLaserScan(Tk,Rk,Sk,nu,e,Odom,optn,k);
+        fprintf(fileID,formatSpec,k,iter,dJ,J);
     end
     Odom = [Odom; Tk(1:2,3)'];
     
     % compute and fuse the TSDF
     Sk = updateReconstruction(Tk,Rk,Sk,mu,Odom,optn);
-    
+    mh = mesh(Sk.x,Sk.y,Sk.TSDF,...
+        'FaceColor','flat','EdgeColor','none','FaceAlpha',1);
     % don't let it run for the entire dataset - we'll change this later
     if k == kStop
         break;
     end
 end
-
+fclose(fileID);
 % *************************************************************************
 %% Cleanup
 if optn.plot

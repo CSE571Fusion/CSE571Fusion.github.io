@@ -1,4 +1,4 @@
-function J = msePointCloud(x,R,N)
+function [J,gradJ] = msePointCloud(x,R,N)
 
     % x : parameters [xr, yr, thetar]
     % R : depth cloud [a; b]
@@ -15,5 +15,7 @@ function J = msePointCloud(x,R,N)
     distance = sqrt(sum(error.^2));
     J = sum(distance)/length(distance);
 
+    g_theta=[R(1,:)'-R(2,:)',-(R(1,:)'+R(2,:)')]*[cos(x(3));sin(x(3))];
+    gradJ = [sqrt(sum(D(1,:).^2));sqrt(sum(D(2,:).^2));sqrt(sum(g_theta'.^2))];
 
 return

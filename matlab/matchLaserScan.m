@@ -22,7 +22,7 @@
 % Parker Owan, Ph.D. Student
 % University of Washington
 % *************************************************************************
-function Tk = matchLaserScan(Tk,Rk,Sk,nu,Odom,optn)
+function [Tk,iter,dJ,JStar] = matchLaserScan(Tk,Rk,Sk,nu,e,Odom,optn,k)
 
 
 % get resolution
@@ -41,6 +41,7 @@ si = round(nu/dx);
 
 %% ICP Algorithm
 dJ = Inf;
+JStar  = Inf;
 alph = 0.10;        % cost filter parameter
 dJThresh = 1e-4;    % gradient of J threshold stop
 maxIter = 100;
@@ -48,8 +49,8 @@ done = 0;
 iter = 1;
 while(~done)
     
-    printString = sprintf('k = %i | ICP: i = %03i, dJ = %+8.5f',...
-        optn.k,iter,dJ);
+    printString = sprintf('k = %i | ICP: i = %03i,dJ = %+8.5f,J=,J = %+8.5f',...
+        optn.k,iter,dJ,JStar);
     
 	if ( optn.plot )
         sf = 0.5;
@@ -80,8 +81,7 @@ while(~done)
     
     % ********************************************
     % 1. find nearest point in Sk
-    for p = 1:length(D)
-        
+    for p = 1:length(D)       
         % find nearest grid cell to initialize local search region
         [ix,iy] = find(abs(Sk.x-D(1,p))<dx/2 & abs(Sk.y-D(2,p))<dx/2);
         if ~isempty(ix)
@@ -149,10 +149,14 @@ while(~done)
           atan2(Tk(2,1),Tk(1,1))];
       
     % perform optimization
-    options = optimoptions(@fminunc,'Display','off');
-    [xStar,JStar] = fminunc(@(x)msePointCloud(x,Cloud,Neighbors),...
-        x0,options);
-     
+%     options = optimoptions(@fminunc,'Display','off');
+      options = optimoptions('fminunc','GradObj','on'); % indicate gradient is provided 
+%     [xStar,JStar] = fminunc(@(x)msePointCloud(x,Cloud,Neighbors),...
+%         x0,options);  
+     [xStar,JStar] = fminunc(@(x) msePointCloud(x,Cloud,Neighbors),x0,options);
+%      [xStar,JStar,exitflag,output,grad,hessian]=fminunc(@(x) msePointCloud(x,Cloud,Neighbors),x0,options)
+%      [JStar,gradJ] = msePointCloud(xStar,R,N);
+%  xStar= fminunc(@(x) msePointCloud(x,3),[1;1],options)
     % convert back to Tk
     Tk = [cos(xStar(3)), -sin(xStar(3)), xStar(1);
           sin(xStar(3)),  cos(xStar(3)), xStar(2);
@@ -169,17 +173,46 @@ while(~done)
         JPrev = JStar;
     else
         J = (1-alph)*JPrev + alph*JStar;      % filter the cost
-        dJ = J - JPrev;
-        JPrev = J;
-        fprintf('iter = %3i, dJ = %+8.5f\n',iter,dJ);
-        if (iter > maxIter) || (abs(dJ) < dJThresh)
+        dJ = J-JPrev;
+        JPrev = J; %JPrev=JStar
+
+        %         if (iter > maxIter) || (abs(dJ) < dJThresh && JStar < e) % add a strong constrain,
+        if (iter > maxIter) ||  (dJ < dJThresh) || (JStar < e) % add a strong constrain,
             done = 1;
         end
     end
     iter = iter+1;
 end
+%% save the final plot
+printString = sprintf('k = %i | ICP: i = %03i,dJ = %+8.5f,J=,J = %+8.5f',...
+    optn.k,iter,dJ,JStar);
 
-
+if ( optn.plot )
+    sf = 0.5;
+    sh=[];
+    mh=[];
+    figure(optn.h),cla
+    plot(Odom(:,1),Odom(:,2),'.-r')
+    mh = mesh(Sk.x,Sk.y,Sk.TSDF,...
+        'FaceColor','flat','EdgeColor','none','FaceAlpha',1);
+    %% save it into matrix: 
+    plot(Tk(1,3),Tk(2,3),'ob','MarkerSize',10)
+    quiver(Tk(1,3),Tk(2,3),sf*Tk(1,1),sf*Tk(2,1),'b')
+    scatter3(D(1,:),D(2,:),2*ones(size(D(1,:))),10,'k','filled')
+    xlim([min(min(Sk.x)) max(max(Sk.x))])
+    ylim([min(min(Sk.y)) max(max(Sk.y))])
+    view(2)
+    text(min(min(Sk.x))+1,min(min(Sk.y))+1,...
+        printString,'FontName','FixedWidth')
+    patch([-6 -1 -1 -6 -6]+max(max(Sk.x)),...
+        [-0.1 -0.1 0.1 0.1 -0.1]+min(min(Sk.y))+1,'k');
+    text(max(max(Sk.x))-3.5,min(min(Sk.y))+1,...
+        '5 m','HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+end
+% filename=sprintf('.\\contourfigures\\frame%d.fig',k);
+% savefig(optn.h,filename,'compact');
+% imwrite(optn.h,filename);
 
 
 
