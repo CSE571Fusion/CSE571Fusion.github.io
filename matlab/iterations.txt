@@ -1,0 +1,5 @@
+When k is 2.00, it needs 3 iterations. dJ:   -0.003, J:    0.104
+When k is 3.00, it needs 3 iterations. dJ:   -0.001, J:    0.049
+When k is 4.00, it needs 3 iterations. dJ:    0.000, J:    0.085
+When k is 5.00, it needs 3 iterations. dJ:   -0.001, J:    0.084
+When k is 6.00, it needs 3 iterations. dJ:   -0.000, J:    0.165
